@@ -1,0 +1,146 @@
+<mujoco model="longhorizon_sorting_cell">
+  <!--
+    Long-Horizon Sorting Cell
+    A tabletop pick-place-and-sort workcell for the FFAI Robothon 2026 submission.
+    Six colour-coded cubes must be transferred into the matching bin.
+  -->
+
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast" cone="elliptic" impratio="10"
+          gravity="0 0 -9.81"/>
+
+  <include file="arm.xml"/>
+
+  <statistic center="0.40 0 0.50" extent="1.4"/>
+
+  <visual>
+    <global azimuth="140" elevation="-22" offwidth="1280" offheight="720"/>
+    <quality shadowsize="4096" offsamples="8"/>
+    <map force="0.1" zfar="30"/>
+    <headlight ambient="0.35 0.35 0.35" diffuse="0.55 0.55 0.55" specular="0.2 0.2 0.2"/>
+  </visual>
+
+  <asset>
+    <texture name="skybox" type="skybox" builtin="gradient"
+             rgb1="0.16 0.19 0.26" rgb2="0.02 0.02 0.04" width="512" height="512"/>
+    <texture name="grid_tex" type="2d" builtin="checker"
+             rgb1="0.18 0.19 0.21" rgb2="0.23 0.24 0.27" width="512" height="512"/>
+    <material name="floor_mat" texture="grid_tex" texrepeat="8 8" reflectance="0.08"/>
+    <material name="table_mat" rgba="0.55 0.45 0.34 1" reflectance="0.04"/>
+    <material name="frame_mat" rgba="0.30 0.32 0.36 1"/>
+    <material name="bin_red_mat" rgba="0.72 0.16 0.16 1"/>
+    <material name="bin_green_mat" rgba="0.14 0.60 0.26 1"/>
+    <material name="bin_blue_mat" rgba="0.16 0.32 0.78 1"/>
+    <material name="cube_red_mat" rgba="0.86 0.22 0.20 1"/>
+    <material name="cube_green_mat" rgba="0.20 0.72 0.32 1"/>
+    <material name="cube_blue_mat" rgba="0.22 0.42 0.90 1"/>
+  </asset>
+
+  <default>
+    <default class="cube">
+      <geom type="box" size="0.0125 0.0125 0.0125" mass="0.06" condim="4"
+            friction="1.2 0.03 0.0006" solref="0.006 1" solimp="0.96 0.99 0.001"/>
+    </default>
+    <default class="bin">
+      <geom type="box" density="1500" condim="3" friction="0.8 0.02 0.001"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light name="key_light" pos="0.90 -0.90 2.10" dir="-0.35 0.35 -1"
+           diffuse="0.75 0.75 0.72" specular="0.25 0.25 0.25" castshadow="true"/>
+    <light name="fill_light" pos="-0.60 0.80 1.80" dir="0.35 -0.35 -1"
+           diffuse="0.30 0.30 0.34" specular="0.05 0.05 0.05" castshadow="false"/>
+
+    <geom name="floor" type="plane" size="4 4 0.05" material="floor_mat" condim="3"/>
+
+    <camera name="overview" pos="1.35 -1.05 1.25"
+            xyaxes="0.759 0.651 0 -0.342 0.398 0.854" fovy="45"/>
+    <camera name="front" pos="1.55 0 0.95" xyaxes="0 1 0 -0.42 0 0.91" fovy="42"/>
+    <camera name="topdown" pos="0.46 0 1.55" xyaxes="1 0 0 0 1 0" fovy="46"/>
+
+    <!-- Workbench -->
+    <body name="table" pos="0 0 0">
+      <geom name="table_top" type="box" pos="0.46 0 0.355" size="0.28 0.46 0.015"
+            material="table_mat" condim="3" friction="0.9 0.02 0.001"/>
+      <geom name="table_leg_1" type="box" pos="0.24 0.40 0.170" size="0.02 0.02 0.170" material="frame_mat"/>
+      <geom name="table_leg_2" type="box" pos="0.24 -0.40 0.170" size="0.02 0.02 0.170" material="frame_mat"/>
+      <geom name="table_leg_3" type="box" pos="0.68 0.40 0.170" size="0.02 0.02 0.170" material="frame_mat"/>
+      <geom name="table_leg_4" type="box" pos="0.68 -0.40 0.170" size="0.02 0.02 0.170" material="frame_mat"/>
+    </body>
+
+    <!-- Sorting bins. Drop targets are the sites at the bin centre. -->
+    <body name="bin_red" pos="0.52 -0.34 0.37">
+      <geom class="bin" name="bin_red_floor" pos="0 0 0.005" size="0.075 0.075 0.005" material="bin_red_mat"/>
+      <geom class="bin" name="bin_red_wall_xp" pos="0.070 0 0.035" size="0.005 0.075 0.035" material="bin_red_mat"/>
+      <geom class="bin" name="bin_red_wall_xn" pos="-0.070 0 0.035" size="0.005 0.075 0.035" material="bin_red_mat"/>
+      <geom class="bin" name="bin_red_wall_yp" pos="0 0.070 0.035" size="0.075 0.005 0.035" material="bin_red_mat"/>
+      <geom class="bin" name="bin_red_wall_yn" pos="0 -0.070 0.035" size="0.075 0.005 0.035" material="bin_red_mat"/>
+      <site name="bin_red_site" pos="0 0 0.02" size="0.012" rgba="0.9 0.3 0.3 0.35"/>
+    </body>
+
+    <body name="bin_green" pos="0.63 0 0.37">
+      <geom class="bin" name="bin_green_floor" pos="0 0 0.005" size="0.075 0.075 0.005" material="bin_green_mat"/>
+      <geom class="bin" name="bin_green_wall_xp" pos="0.070 0 0.035" size="0.005 0.075 0.035" material="bin_green_mat"/>
+      <geom class="bin" name="bin_green_wall_xn" pos="-0.070 0 0.035" size="0.005 0.075 0.035" material="bin_green_mat"/>
+      <geom class="bin" name="bin_green_wall_yp" pos="0 0.070 0.035" size="0.075 0.005 0.035" material="bin_green_mat"/>
+      <geom class="bin" name="bin_green_wall_yn" pos="0 -0.070 0.035" size="0.075 0.005 0.035" material="bin_green_mat"/>
+      <site name="bin_green_site" pos="0 0 0.02" size="0.012" rgba="0.3 0.9 0.4 0.35"/>
+    </body>
+
+    <body name="bin_blue" pos="0.52 0.34 0.37">
+      <geom class="bin" name="bin_blue_floor" pos="0 0 0.005" size="0.075 0.075 0.005" material="bin_blue_mat"/>
+      <geom class="bin" name="bin_blue_wall_xp" pos="0.070 0 0.035" size="0.005 0.075 0.035" material="bin_blue_mat"/>
+      <geom class="bin" name="bin_blue_wall_xn" pos="-0.070 0 0.035" size="0.005 0.075 0.035" material="bin_blue_mat"/>
+      <geom class="bin" name="bin_blue_wall_yp" pos="0 0.070 0.035" size="0.075 0.005 0.035" material="bin_blue_mat"/>
+      <geom class="bin" name="bin_blue_wall_yn" pos="0 -0.070 0.035" size="0.075 0.005 0.035" material="bin_blue_mat"/>
+      <site name="bin_blue_site" pos="0 0 0.02" size="0.012" rgba="0.3 0.4 0.9 0.35"/>
+    </body>
+
+    <!-- Six cubes to be sorted. Free joints, randomised at reset by the Python layer. -->
+    <body name="cube_red_1" pos="0.36 -0.10 0.3825">
+      <freejoint name="cube_red_1_free"/>
+      <geom class="cube" name="cube_red_1_geom" material="cube_red_mat"/>
+      <site name="cube_red_1_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+
+    <body name="cube_red_2" pos="0.31 0.02 0.3825">
+      <freejoint name="cube_red_2_free"/>
+      <geom class="cube" name="cube_red_2_geom" material="cube_red_mat"/>
+      <site name="cube_red_2_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+
+    <body name="cube_green_1" pos="0.40 0.02 0.3825">
+      <freejoint name="cube_green_1_free"/>
+      <geom class="cube" name="cube_green_1_geom" material="cube_green_mat"/>
+      <site name="cube_green_1_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+
+    <body name="cube_green_2" pos="0.46 -0.14 0.3825">
+      <freejoint name="cube_green_2_free"/>
+      <geom class="cube" name="cube_green_2_geom" material="cube_green_mat"/>
+      <site name="cube_green_2_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+
+    <body name="cube_blue_1" pos="0.36 0.12 0.3825">
+      <freejoint name="cube_blue_1_free"/>
+      <geom class="cube" name="cube_blue_1_geom" material="cube_blue_mat"/>
+      <site name="cube_blue_1_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+
+    <body name="cube_blue_2" pos="0.45 0.15 0.3825">
+      <freejoint name="cube_blue_2_free"/>
+      <geom class="cube" name="cube_blue_2_geom" material="cube_blue_mat"/>
+      <site name="cube_blue_2_site" size="0.004" rgba="1 1 1 0"/>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <framepos name="pose_cube_red_1" objtype="site" objname="cube_red_1_site"/>
+    <framepos name="pose_cube_red_2" objtype="site" objname="cube_red_2_site"/>
+    <framepos name="pose_cube_green_1" objtype="site" objname="cube_green_1_site"/>
+    <framepos name="pose_cube_green_2" objtype="site" objname="cube_green_2_site"/>
+    <framepos name="pose_cube_blue_1" objtype="site" objname="cube_blue_1_site"/>
+    <framepos name="pose_cube_blue_2" objtype="site" objname="cube_blue_2_site"/>
+  </sensor>
+</mujoco>
