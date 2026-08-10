@@ -1,0 +1,124 @@
+<mujoco model="sortbot_arm">
+  <!-- 6-DoF arm with a coupled parallel-jaw gripper. Primitive geoms only, no meshes. -->
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <default>
+    <default class="arm">
+      <joint type="hinge" damping="12" armature="0.12" frictionloss="0.35"/>
+      <geom type="capsule" rgba="0.78 0.80 0.84 1" density="850"
+            friction="0.9 0.02 0.001" solref="0.008 1" solimp="0.95 0.99 0.001"/>
+      <position kp="1200" kv="90" forcerange="-280 280"/>
+    </default>
+    <default class="jaw">
+      <joint type="slide" damping="40" armature="0.02"/>
+      <geom type="box" rgba="0.16 0.17 0.20 1" density="1100" condim="4" priority="2"
+            friction="1.8 0.06 0.0008" solref="0.006 1" solimp="0.97 0.995 0.001"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="pedestal" pos="0 0 0">
+      <geom name="pedestal_geom" type="cylinder" size="0.11 0.20" pos="0 0 0.20"
+            rgba="0.24 0.26 0.30 1" density="2000"/>
+
+      <body name="shoulder_link" pos="0 0 0.44">
+        <joint class="arm" name="joint_1" axis="0 0 1" range="-3.05 3.05"/>
+        <geom class="arm" name="shoulder_geom" fromto="0 0 -0.05 0 0 0.05" size="0.065"/>
+
+        <body name="upper_arm_link" pos="0 0 0.07">
+          <joint class="arm" name="joint_2" axis="0 1 0" range="-2.15 2.15"/>
+          <geom class="arm" name="upper_arm_geom" fromto="0 0 0 0 0 0.34" size="0.050"/>
+
+          <body name="forearm_link" pos="0 0 0.34">
+            <joint class="arm" name="joint_3" axis="0 1 0" range="-2.70 2.70"/>
+            <geom class="arm" name="forearm_geom" fromto="0 0 0 0 0 0.30" size="0.042"/>
+
+            <body name="wrist_1_link" pos="0 0 0.30">
+              <joint class="arm" name="joint_4" axis="0 1 0" range="-2.70 2.70"/>
+              <geom class="arm" name="wrist_1_geom" fromto="0 0 0 0 0 0.07" size="0.036"/>
+
+              <body name="wrist_2_link" pos="0 0 0.07">
+                <joint class="arm" name="joint_5" axis="0 0 1" range="-3.05 3.05"/>
+                <geom class="arm" name="wrist_2_geom" fromto="0 0 0 0 0 0.06" size="0.033"/>
+
+                <body name="wrist_3_link" pos="0 0 0.06">
+                  <joint class="arm" name="joint_6" axis="0 1 0" range="-3.05 3.05"/>
+                  <geom class="arm" name="wrist_3_geom" fromto="0 0 0 0 0 0.05" size="0.030"/>
+
+                  <body name="gripper_base" pos="0 0 0.05">
+                    <geom name="gripper_base_geom" type="box" size="0.052 0.032 0.018"
+                          pos="0 0 0.018" rgba="0.16 0.17 0.20 1" density="1200"/>
+
+                    <site name="ee_site" pos="0 0 0.085" size="0.010" rgba="1.0 0.45 0.10 1"/>
+                    <site name="wrist_ft_site" pos="0 0 0.0" size="0.008" rgba="0.2 0.8 1.0 0.4"/>
+                    <camera name="wrist_cam" pos="0 -0.11 0.02" xyaxes="1 0 0 0 0.45 0.89" fovy="72"/>
+
+                    <body name="left_jaw" pos="0.016 0 0.036">
+                      <joint class="jaw" name="left_jaw_joint" axis="1 0 0" range="0 0.036"/>
+                      <geom class="jaw" name="left_jaw_pad" size="0.009 0.020 0.042" pos="0 0 0.042"/>
+                      <site name="left_pad_site" type="box" pos="0 0 0.042"
+                            size="0.010 0.021 0.043" rgba="0.9 0.2 0.2 0.12"/>
+                    </body>
+
+                    <body name="right_jaw" pos="-0.016 0 0.036">
+                      <joint class="jaw" name="right_jaw_joint" axis="-1 0 0" range="0 0.036"/>
+                      <geom class="jaw" name="right_jaw_pad" size="0.009 0.020 0.042" pos="0 0 0.042"/>
+                      <site name="right_pad_site" type="box" pos="0 0 0.042"
+                            size="0.010 0.021 0.043" rgba="0.2 0.4 0.9 0.12"/>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <equality>
+    <!-- Mechanically couple the two jaws so a single actuator drives the gripper. -->
+    <joint name="jaw_coupling" joint1="right_jaw_joint" joint2="left_jaw_joint"
+           polycoef="0 1 0 0 0" solref="0.005 1"/>
+  </equality>
+
+  <actuator>
+    <position class="arm" name="act_joint_1" joint="joint_1" ctrlrange="-3.05 3.05"/>
+    <position class="arm" name="act_joint_2" joint="joint_2" ctrlrange="-2.15 2.15"/>
+    <position class="arm" name="act_joint_3" joint="joint_3" ctrlrange="-2.70 2.70"/>
+    <position class="arm" name="act_joint_4" joint="joint_4" ctrlrange="-2.70 2.70"/>
+    <position class="arm" name="act_joint_5" joint="joint_5" ctrlrange="-3.05 3.05"/>
+    <position class="arm" name="act_joint_6" joint="joint_6" ctrlrange="-3.05 3.05"/>
+    <position name="act_gripper" joint="left_jaw_joint" ctrlrange="0 0.036"
+              kp="1400" kv="60" forcerange="-120 120"/>
+  </actuator>
+
+  <sensor>
+    <framepos name="ee_pos" objtype="site" objname="ee_site"/>
+    <framequat name="ee_quat" objtype="site" objname="ee_site"/>
+    <framelinvel name="ee_linvel" objtype="site" objname="ee_site"/>
+
+    <force name="wrist_force" site="wrist_ft_site"/>
+    <torque name="wrist_torque" site="wrist_ft_site"/>
+
+    <touch name="left_pad_touch" site="left_pad_site"/>
+    <touch name="right_pad_touch" site="right_pad_site"/>
+
+    <jointpos name="qpos_joint_1" joint="joint_1"/>
+    <jointpos name="qpos_joint_2" joint="joint_2"/>
+    <jointpos name="qpos_joint_3" joint="joint_3"/>
+    <jointpos name="qpos_joint_4" joint="joint_4"/>
+    <jointpos name="qpos_joint_5" joint="joint_5"/>
+    <jointpos name="qpos_joint_6" joint="joint_6"/>
+    <jointpos name="qpos_gripper" joint="left_jaw_joint"/>
+
+    <jointvel name="qvel_joint_1" joint="joint_1"/>
+    <jointvel name="qvel_joint_2" joint="joint_2"/>
+    <jointvel name="qvel_joint_3" joint="joint_3"/>
+    <jointvel name="qvel_joint_4" joint="joint_4"/>
+    <jointvel name="qvel_joint_5" joint="joint_5"/>
+    <jointvel name="qvel_joint_6" joint="joint_6"/>
+    <jointvel name="qvel_gripper" joint="left_jaw_joint"/>
+  </sensor>
+</mujoco>
